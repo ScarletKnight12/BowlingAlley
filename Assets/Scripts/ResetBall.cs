@@ -1,3 +1,7 @@
+/*
+ This script is attached to the ball in VR scene. It takes care of
+ updating score, resetting ball, restting pins and audio for ball roll and pins falling.
+ */
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,31 +10,32 @@ using System.IO;
 
 public class ResetBall : MonoBehaviour
 {
-
-    public Vector3 initialPosition;
-
-    public int throwNum = 0;
-
-    public GameObject[] pinGameObjects;
-
-    public List<Vector3> initialPositionArray;
-    public List<Quaternion> initialRotationArray;
-
+    //Variables which are set from unity editor.
     public TextMeshProUGUI scoresPanel;
     public TextMeshProUGUI frameScoresPanel;
     public TextMeshProUGUI finalScoresPanel;
+    public AudioSource pinsAudioSource;
 
+    //Local variables to the script.
+    public Vector3 initialPosition;
+    public int throwNum = 0;
+
+    //reference to pins.
+    public GameObject[] pinGameObjects;
+
+    //arrays to store initial position and rotation of pins.
+    public List<Vector3> initialPositionArray;
+    public List<Quaternion> initialRotationArray;
+
+    //local variables related to scores.
     string[] scoresArray = new string[52];
     string[] framesArray = new string[52];
-
-
     int[] scores = new int[21];
     int[] framescores = new int[10];
-    
     int scoreIndex = 0;
+    string filePath;
 
-    string filePath; 
-
+#region unity methods
     void Awake()
     {
         for (int i = 0; i < 52; i++) {
@@ -66,7 +71,7 @@ public class ResetBall : MonoBehaviour
 
         scoresPanel.SetText(string.Concat(scoresArray));
         frameScoresPanel.SetText(string.Concat(framesArray));
-        finalScoresPanel.SetText(UIScript.inputText);
+        finalScoresPanel.SetText("Player Name:" + UIScript.inputText);
 
         //increasing max angular velocity to counter the slowing of ball.
         this.gameObject.GetComponent<Rigidbody>().maxAngularVelocity = (float)(2.5 * this.gameObject.GetComponent<Rigidbody>().maxAngularVelocity);
@@ -75,33 +80,45 @@ public class ResetBall : MonoBehaviour
 
     void Update()
     {
-        
+     
     }
+
+#endregion
 
     void OnCollisionEnter(Collision collision)
     {
         //reset the ball's position if you hit sidelane
-        if (!isGameFinished() && collision.gameObject.CompareTag("SideLane")) {
+        if (!isGameFinished() && collision.gameObject.CompareTag("SideLane"))
+        {
             this.gameObject.transform.position = initialPosition;
             this.gameObject.transform.position = new Vector3(0, -40, 0);
             StartCoroutine(resetThrow());
         }
+        //Play pins falling sound if ball hits pins.
+        else if (collision.gameObject.CompareTag("Pin"))
+        {
+            if (!pinsAudioSource.isPlaying)
+            {
+                pinsAudioSource.Play();
+            }
+        }
     }
 
     private IEnumerator resetThrow() {
-        
         scoresPanel.SetText("Updating score. Please wait.......");
         if (areAnyPinsDown())
         {
+            //If any pins are down, we wait for 7 seconds to reset pins and update score.
             yield return new WaitForSeconds(7);
         }
         else {
+            //if foul or gutter, reset after 1 second.
             yield return new WaitForSeconds(1); 
         }
 
         throwNum++;
         
-        int numOfPinsDown = getCountOfPinsDown();
+        int numOfPinsDown = getCountOfPinsDownAndDeactivateFallenPins();
 
         scores[scoreIndex++] = numOfPinsDown;
 
@@ -309,7 +326,7 @@ public class ResetBall : MonoBehaviour
         return false;
     }
 
-    private int getCountOfPinsDown() {
+    private int getCountOfPinsDownAndDeactivateFallenPins() {
         int count = 0;
 
         for (int i = 0; i < pinGameObjects.Length; i++)
@@ -320,6 +337,14 @@ public class ResetBall : MonoBehaviour
                 count++;
             }
         }
+
+        for (int i = 0; i < pinGameObjects.Length; i++) {
+            if (pinGameObjects[i].activeInHierarchy) {
+                pinGameObjects[i].transform.position = initialPositionArray[i];
+                pinGameObjects[i].transform.rotation = initialRotationArray[i];
+            }
+        }
+
         return count;
     }
 

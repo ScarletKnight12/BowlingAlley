@@ -1,12 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
+/*
+    Data class to hold player name and his score.
+ */
 public class ScoreRecord
 {
 
-    private string playerName;
 
+    private string playerName;
     private int score;
 
     public ScoreRecord(string playerName, int score) {
@@ -14,6 +13,7 @@ public class ScoreRecord
         this.score = score;
     }
 
+ #region getter methods
     public string getPlayerName() {
         return playerName;
     }
@@ -21,5 +21,6 @@ public class ScoreRecord
     public int getScore() {
         return score;
     }
+#endregion
 
 }
