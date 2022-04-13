@@ -56,7 +56,7 @@ public class UIScript : MonoBehaviour
             string resultText = "Top 10 Scores:\n";
             for (int i = 0; i < 10; i++) {
                 if (i < scoreRecords.Count) {
-                    resultText += "" + (i+1) + "\t" + scoreRecords[i].getPlayerName() + "\t" + scoreRecords[i].getScore() + "\n";
+                    resultText += "" + (i+1) + " " + scoreRecords[i].getPlayerName() + "\t" + scoreRecords[i].getScore() + "\n";
                 }
             }
             highScoresText.SetText(resultText);

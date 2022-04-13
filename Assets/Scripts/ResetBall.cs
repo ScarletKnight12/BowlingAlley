@@ -15,12 +15,8 @@ public class ResetBall : MonoBehaviour
     public TextMeshProUGUI frameScoresPanel;
     public TextMeshProUGUI finalScoresPanel;
     public AudioSource pinsAudioSource;
-
-    //Local variables to the script.
     public Vector3 initialPosition;
     public int throwNum = 0;
-
-    //reference to pins.
     public GameObject[] pinGameObjects;
 
     //arrays to store initial position and rotation of pins.
@@ -71,10 +67,10 @@ public class ResetBall : MonoBehaviour
 
         scoresPanel.SetText(string.Concat(scoresArray));
         frameScoresPanel.SetText(string.Concat(framesArray));
-        finalScoresPanel.SetText("Player Name:" + UIScript.inputText);
+        finalScoresPanel.SetText("Player Name: " + UIScript.inputText);
 
         //increasing max angular velocity to counter the slowing of ball.
-        this.gameObject.GetComponent<Rigidbody>().maxAngularVelocity = (float)(2.5 * this.gameObject.GetComponent<Rigidbody>().maxAngularVelocity);
+        this.gameObject.GetComponent<Rigidbody>().maxAngularVelocity = (float)(3 * this.gameObject.GetComponent<Rigidbody>().maxAngularVelocity);
 
     }
 
