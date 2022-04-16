@@ -150,7 +150,7 @@ public class ResetBall : MonoBehaviour
         updateScoresPanel();
         resetBall();
         if (isGameFinished()) {
-            finalScoresPanel.SetText("Final Score is : " + framescores[9]);
+            finalScoresPanel.SetText("Game Finished. Final Score is : " + framescores[9]);
             gameObject.transform.position = Vector3.zero;
             gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
             gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
