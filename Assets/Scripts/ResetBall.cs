@@ -15,9 +15,15 @@ public class ResetBall : MonoBehaviour
     public TextMeshProUGUI frameScoresPanel;
     public TextMeshProUGUI finalScoresPanel;
     public AudioSource pinsAudioSource;
+    public AudioSource ballRollAudioSource;
     public Vector3 initialPosition;
     public int throwNum = 0;
     public GameObject[] pinGameObjects;
+
+    public float xForce = 10.0f;
+    public float zForce = 100.0f;
+    public float yForce = 500.0f;
+    public float audioClipSpeed = 10.0f;
 
     //arrays to store initial position and rotation of pins.
     public List<Vector3> initialPositionArray;
@@ -74,9 +80,51 @@ public class ResetBall : MonoBehaviour
 
     }
 
-    void Update()
+    void FixedUpdate()
     {
-     
+        float x = 0.0f;
+        if (Input.GetKey(KeyCode.A))
+        {
+            x = x - xForce;
+        }
+
+        if (Input.GetKey(KeyCode.D))
+        {
+            x = x + xForce;
+        }
+
+        //this is for z axis' movement  
+
+        float z = 0.0f;
+        if (Input.GetKey(KeyCode.S))
+        {
+            z = z - zForce;
+        }
+
+        if (Input.GetKey(KeyCode.W))
+        {
+            z = z + zForce;
+        }
+        //this is for z axis' movement  
+
+        float y = 0.0f;
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            y = yForce;
+        }
+
+        GetComponent<Rigidbody>().AddForce(x, y, z);
+
+        if (ballRollAudioSource.isPlaying) {
+            if (gameObject.transform.position.y > 0.1f)
+            {
+                float audioPitch = GetComponent<Rigidbody>().velocity.magnitude / audioClipSpeed;
+                ballRollAudioSource.pitch = Mathf.Clamp(audioPitch, 0.1f, 4f);
+            }
+            else {
+                ballRollAudioSource.Pause(); 
+            }
+        }
     }
 
 #endregion
@@ -98,10 +146,17 @@ public class ResetBall : MonoBehaviour
                 pinsAudioSource.Play();
             }
         }
+
+        else if (collision.gameObject.CompareTag("Floor")) {
+            if (!ballRollAudioSource.isPlaying) {
+                ballRollAudioSource.Play();
+            }
+        }
     }
 
     private IEnumerator resetThrow() {
         scoresPanel.SetText("Updating score. Please wait.......");
+        ballRollAudioSource.Stop();
         if (areAnyPinsDown())
         {
             //If any pins are down, we wait for 7 seconds to reset pins and update score.
@@ -338,6 +393,8 @@ public class ResetBall : MonoBehaviour
             if (pinGameObjects[i].activeInHierarchy) {
                 pinGameObjects[i].transform.position = initialPositionArray[i];
                 pinGameObjects[i].transform.rotation = initialRotationArray[i];
+                pinGameObjects[i].GetComponent<Rigidbody>().velocity = new Vector3(0, 0, 0);
+                pinGameObjects[i].GetComponent<Rigidbody>().angularVelocity = new Vector3(0, 0, 0);
             }
         }
 
