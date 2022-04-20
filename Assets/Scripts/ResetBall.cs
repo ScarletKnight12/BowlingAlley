@@ -20,9 +20,12 @@ public class ResetBall : MonoBehaviour
     public int throwNum = 0;
     public GameObject[] pinGameObjects;
 
+    //The below part has been commented out, make sure you uncomment it while debugging in local.
+    /*
     public float xForce = 10.0f;
     public float zForce = 10.0f;
     public float yForce = 500.0f;
+    */
     public float audioClipSpeed = 10.0f;
 
     //arrays to store initial position and rotation of pins.
@@ -83,8 +86,11 @@ public class ResetBall : MonoBehaviour
 
     }
 
+    /*
+        The commented part in the code is for allowing to roll the ball and debug without VR HMD. Make sure you uncomment it and use for local debugging. 
+    */
     void FixedUpdate()
-    {
+    {   /*
         float x = 0.0f;
         if (Input.GetKey(KeyCode.A))
         {
@@ -117,6 +123,8 @@ public class ResetBall : MonoBehaviour
         }
 
         GetComponent<Rigidbody>().AddForce(x, y, z);
+
+        */
 
         if (ballRollAudioSource.isPlaying)
         {
