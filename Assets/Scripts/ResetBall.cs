@@ -15,9 +15,18 @@ public class ResetBall : MonoBehaviour
     public TextMeshProUGUI frameScoresPanel;
     public TextMeshProUGUI finalScoresPanel;
     public AudioSource pinsAudioSource;
+    public AudioSource ballRollAudioSource;
     public Vector3 initialPosition;
     public int throwNum = 0;
     public GameObject[] pinGameObjects;
+
+    //The below part has been commented out, make sure you uncomment it while debugging in local.
+    /*
+    public float xForce = 10.0f;
+    public float zForce = 10.0f;
+    public float yForce = 500.0f;
+    */
+    public float audioClipSpeed = 10.0f;
 
     //arrays to store initial position and rotation of pins.
     public List<Vector3> initialPositionArray;
@@ -31,16 +40,18 @@ public class ResetBall : MonoBehaviour
     int scoreIndex = 0;
     string filePath;
 
-#region unity methods
+    #region unity methods
     void Awake()
     {
-        for (int i = 0; i < 52; i++) {
+        for (int i = 0; i < 52; i++)
+        {
             scoresArray[i] = " ";
             framesArray[i] = " ";
         }
         int frameStartIndex = 3;
         int frameDividerIndex = 1;
-        for (int i = 0; i < 9; i++) {
+        for (int i = 0; i < 9; i++)
+        {
             scoresArray[frameStartIndex] = "|";
             scoresArray[frameStartIndex + 1] = "|";
             scoresArray[frameDividerIndex] = "|";
@@ -58,9 +69,10 @@ public class ResetBall : MonoBehaviour
     {
         initialPosition = gameObject.transform.position;
         pinGameObjects = GameObject.FindGameObjectsWithTag("Pin");
-        filePath = Application.persistentDataPath + "/bowling_data.txt"; 
+        filePath = Application.persistentDataPath + "/bowling_data.txt";
 
-        for (int i = 0; i < pinGameObjects.Length; i++) {
+        for (int i = 0; i < pinGameObjects.Length; i++)
+        {
             initialPositionArray.Add(pinGameObjects[i].transform.position);
             initialRotationArray.Add(pinGameObjects[i].transform.rotation);
         }
@@ -74,12 +86,61 @@ public class ResetBall : MonoBehaviour
 
     }
 
-    void Update()
-    {
-     
+    /*
+        The commented part in the code is for allowing to roll the ball and debug without VR HMD. Make sure you uncomment it and use for local debugging. 
+    */
+    void FixedUpdate()
+    {   /*
+        float x = 0.0f;
+        if (Input.GetKey(KeyCode.A))
+        {
+            x = x - xForce;
+        }
+
+        if (Input.GetKey(KeyCode.D))
+        {
+            x = x + xForce;
+        }
+
+        //this is for z axis' movement  
+
+        float z = 0.0f;
+        if (Input.GetKey(KeyCode.S))
+        {
+            z = z - zForce;
+        }
+
+        if (Input.GetKey(KeyCode.W))
+        {
+            z = z + zForce;
+        }
+        //this is for z axis' movement  
+
+        float y = 0.0f;
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            y = yForce;
+        }
+
+        GetComponent<Rigidbody>().AddForce(x, y, z);
+
+        */
+
+        if (ballRollAudioSource.isPlaying)
+        {
+            if (gameObject.transform.position.y > 0.1f)
+            {
+                float audioPitch = GetComponent<Rigidbody>().velocity.magnitude / audioClipSpeed;
+                ballRollAudioSource.pitch = Mathf.Clamp(audioPitch, 0.1f, 4f);
+            }
+            else
+            {
+                ballRollAudioSource.Pause();
+            }
+        }
     }
 
-#endregion
+    #endregion
 
     void OnCollisionEnter(Collision collision)
     {
@@ -98,22 +159,33 @@ public class ResetBall : MonoBehaviour
                 pinsAudioSource.Play();
             }
         }
+
+        else if (collision.gameObject.CompareTag("Floor"))
+        {
+            if (!ballRollAudioSource.isPlaying)
+            {
+                ballRollAudioSource.Play();
+            }
+        }
     }
 
-    private IEnumerator resetThrow() {
+    private IEnumerator resetThrow()
+    {
         scoresPanel.SetText("Updating score. Please wait.......");
+        ballRollAudioSource.Stop();
         if (areAnyPinsDown())
         {
             //If any pins are down, we wait for 7 seconds to reset pins and update score.
             yield return new WaitForSeconds(7);
         }
-        else {
+        else
+        {
             //if foul or gutter, reset after 1 second.
-            yield return new WaitForSeconds(1); 
+            yield return new WaitForSeconds(1);
         }
 
         throwNum++;
-        
+
         int numOfPinsDown = getCountOfPinsDownAndDeactivateFallenPins();
 
         scores[scoreIndex++] = numOfPinsDown;
@@ -149,7 +221,8 @@ public class ResetBall : MonoBehaviour
 
         updateScoresPanel();
         resetBall();
-        if (isGameFinished()) {
+        if (isGameFinished())
+        {
             finalScoresPanel.SetText("Game Finished. Final Score is : " + framescores[9]);
             gameObject.transform.position = Vector3.zero;
             gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
@@ -158,21 +231,24 @@ public class ResetBall : MonoBehaviour
         }
     }
 
-    
+
     bool approx(Quaternion quatA, Quaternion quatB, float acceptableRange)
     {
         return 1 - Mathf.Abs(Quaternion.Dot(quatA, quatB)) < acceptableRange;
     }
 
-    private void resetBall() {
+    private void resetBall()
+    {
         gameObject.transform.position = initialPosition;
         gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
         gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
     }
 
-    private void resetPins() {
+    private void resetPins()
+    {
         throwNum = 0;
-        for (int i = 0; i < pinGameObjects.Length; i++) {
+        for (int i = 0; i < pinGameObjects.Length; i++)
+        {
             pinGameObjects[i].SetActive(true);
             pinGameObjects[i].transform.position = initialPositionArray[i];
             pinGameObjects[i].transform.rotation = initialRotationArray[i];
@@ -181,26 +257,34 @@ public class ResetBall : MonoBehaviour
         }
     }
 
-    private void initializeScoresArrays() {
-        for (int i = 0; i < 21; i++) {
+    private void initializeScoresArrays()
+    {
+        for (int i = 0; i < 21; i++)
+        {
             scores[i] = -1;
         }
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++)
+        {
             framescores[i] = -1;
         }
     }
 
-    private void updateScoresPanel() {
+    private void updateScoresPanel()
+    {
         int tempScoresIndex = 0;
-        for (int i = 0; i < 52; i++)  {
-            if (!scoresArray[i].Equals("|")) {
-                if (scores[tempScoresIndex] != -1) {
+        for (int i = 0; i < 52; i++)
+        {
+            if (!scoresArray[i].Equals("|"))
+            {
+                if (scores[tempScoresIndex] != -1)
+                {
                     string score;
                     if (scores[tempScoresIndex] == 10)
                     {
                         score = "X";
                     }
-                    else {
+                    else
+                    {
                         score = "" + scores[tempScoresIndex];
                     }
                     tempScoresIndex++;
@@ -213,12 +297,14 @@ public class ResetBall : MonoBehaviour
         updateFrameScoresUI();
     }
 
-    private void fillCumulativeScores() {
+    private void fillCumulativeScores()
+    {
         initializeFrameScores();
         assignCumulativeScores();
     }
 
-    private void initializeFrameScores() {
+    private void initializeFrameScores()
+    {
         for (int i = 0; i < 10; i++)
         {
             if (i < 9)
@@ -256,8 +342,10 @@ public class ResetBall : MonoBehaviour
         }
     }
 
-    private void assignCumulativeScores() {
-        for (int i = 0; i < 9; i++) {
+    private void assignCumulativeScores()
+    {
+        for (int i = 0; i < 9; i++)
+        {
             if (framescores[i] != -1)
             {
                 int scoreIndex1 = 2 * i;
@@ -271,8 +359,10 @@ public class ResetBall : MonoBehaviour
                             framescores[i] += framescores[i + 1];
                         }
                     }
-                    else if (scores[scoreIndex2] != -1 && (scores[scoreIndex1] + scores[scoreIndex2] == 10)) {
-                        if (scores[scoreIndex2 + 1] != -1) {
+                    else if (scores[scoreIndex2] != -1 && (scores[scoreIndex1] + scores[scoreIndex2] == 10))
+                    {
+                        if (scores[scoreIndex2 + 1] != -1)
+                        {
                             framescores[i] += scores[scoreIndex2 + 1];
                             /*
                             if (scores[scoreIndex2 + 2] != -1) {
@@ -282,17 +372,20 @@ public class ResetBall : MonoBehaviour
                         }
                     }
                 }
-                if (i > 0) {
+                if (i > 0)
+                {
                     framescores[i] += framescores[i - 1];
                 }
             }
         }
-        if (framescores[9] != -1) {
+        if (framescores[9] != -1)
+        {
             framescores[9] += framescores[8];
         }
     }
 
-    private void updateFrameScoresUI() {
+    private void updateFrameScoresUI()
+    {
         int initialFramesIndex = 0;
         //any value less than 51
         for (int i = 0; i < 47; i += 5)
@@ -311,7 +404,8 @@ public class ResetBall : MonoBehaviour
         frameScoresPanel.SetText(string.Concat(framesArray));
     }
 
-    private bool areAnyPinsDown() {
+    private bool areAnyPinsDown()
+    {
         for (int i = 0; i < pinGameObjects.Length; i++)
         {
             if (pinGameObjects[i].activeInHierarchy && !approx(pinGameObjects[i].transform.rotation, initialRotationArray[i], 0.1f))
@@ -322,7 +416,8 @@ public class ResetBall : MonoBehaviour
         return false;
     }
 
-    private int getCountOfPinsDownAndDeactivateFallenPins() {
+    private int getCountOfPinsDownAndDeactivateFallenPins()
+    {
         int count = 0;
 
         for (int i = 0; i < pinGameObjects.Length; i++)
@@ -334,18 +429,24 @@ public class ResetBall : MonoBehaviour
             }
         }
 
-        for (int i = 0; i < pinGameObjects.Length; i++) {
-            if (pinGameObjects[i].activeInHierarchy) {
+        for (int i = 0; i < pinGameObjects.Length; i++)
+        {
+            if (pinGameObjects[i].activeInHierarchy)
+            {
                 pinGameObjects[i].transform.position = initialPositionArray[i];
                 pinGameObjects[i].transform.rotation = initialRotationArray[i];
+                pinGameObjects[i].GetComponent<Rigidbody>().velocity = new Vector3(0, 0, 0);
+                pinGameObjects[i].GetComponent<Rigidbody>().angularVelocity = new Vector3(0, 0, 0);
             }
         }
 
         return count;
     }
 
-    private bool isGameFinished() {
-        if (scores[18] != -1 && scores[19] != -1) {
+    private bool isGameFinished()
+    {
+        if (scores[18] != -1 && scores[19] != -1)
+        {
             if (scores[18] + scores[19] >= 10)
             {
                 if (scores[20] != -1)
@@ -357,16 +458,19 @@ public class ResetBall : MonoBehaviour
                     return false;
                 }
             }
-            else {
+            else
+            {
                 return true;
             }
         }
         return false;
     }
 
-    private void saveScoreToFile() {
+    private void saveScoreToFile()
+    {
         string data = UIScript.inputText + "," + framescores[9];
-        using (StreamWriter w = File.AppendText(filePath)) {
+        using (StreamWriter w = File.AppendText(filePath))
+        {
             w.WriteLine(data);
             w.Close();
         }
